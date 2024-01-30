@@ -75,7 +75,7 @@ jobs:
             const defaultArch = 'amd64'
             core.info(`Multiarch Awareness is ${multiarch ? "on" : "off" }`)
             for (const rockcraftFile of await rockcraftGlobber.glob()) {
-              const rockPath = path.relative('.', path.dirname(rockcraftFile))
+              const rockPath = path.relative('.', path.dirname(rockcraftFile)) || "./"
               core.info(`found rockcraft.yaml in ${rockPath}`)
               const fileHash = await glob.hashFiles(path.join(rockPath, '**'))
               const [rockName, rockVersion] = (
