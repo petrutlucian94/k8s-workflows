@@ -30,7 +30,6 @@ jobs:
           echo "WORKFLOW_REF=$WORKFLOW_REF" >> $GITHUB_ENV
         fi
     - uses: actions/checkout@v4.1.1
-      needs: [workflow-rev]
       with:
         repository: ${{ env.WORKFLOW_REPO || github.repository }}
         ref: ${{ env.WORKFLOW_REF }}
