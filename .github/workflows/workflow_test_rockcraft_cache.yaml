@@ -29,3 +29,4 @@ jobs:
     with:
       images: ${{ needs.restore-cache.outputs.images }}
       trivy-image-config: ./trivy.yaml
+      upload-result: true
