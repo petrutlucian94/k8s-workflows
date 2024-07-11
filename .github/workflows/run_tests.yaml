@@ -1,0 +1,51 @@
+name: Run rocks tests
+
+on:
+  workflow_call:
+    inputs:
+      rock-metas:
+        description: List of maps featuring the built {name, version, path, arch, image}
+        type: string
+        default: "[]"
+
+jobs:
+  run-tests:
+    if: ${{ inputs.rock-metas != '[]' }}
+    name: Run tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      - name: Setup environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          pip install tox
+      - name: Install lxd
+        run: |
+          sudo snap refresh lxd --channel 5.21/stable
+          sudo lxd init --auto
+          sudo usermod --append --groups lxd $USER
+          sg lxd -c 'lxc version'
+          sudo iptables -I DOCKER-USER -i lxdbr0 -j ACCEPT
+          sudo iptables -I DOCKER-USER -o lxdbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+      - name: Set rock image environment variables
+        run: |
+          echo '${{ inputs.rock-metas }}' | jq -c '.[] | select(.arch == "amd64") ' | while read i; do
+            name=$(echo "$i" | jq -r '.name' | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            image=$(echo "$i" | jq -r '.image')
+            echo "ROCK_$name=$image" >> $GITHUB_ENV
+          done
+      - name: Run sanity tests
+        run: |
+          tox --conf tests/tox.ini -e sanity
+      - name: Run integration tests
+        run: |
+          export TEST_SNAP_CHANNEL="latest/edge"
+          export TEST_SUBSTRATE=lxd
+          export TEST_LXD_IMAGE="ubuntu:22.04"
+          sg lxd -c 'tox --conf tests/tox.ini -e integration'
