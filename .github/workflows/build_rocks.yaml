@@ -113,9 +113,7 @@ jobs:
               const [rockName, rockVersion] = (
                 await exec.getExecOutput('yq', ['.name,.version', rockcraftFile])
               ).stdout.trim().split("\n")
-              const platforms = (
-                await exec.getExecOutput('yq', ['.platforms | keys', '-o=json', rockcraftFile])
-              ).stdout.trim()
+              const platforms = ['amd64']
               if (multiarch && platforms) {
                 const arches = JSON.parse(platforms)
                 for (arch of arches) {
